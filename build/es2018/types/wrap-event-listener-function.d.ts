@@ -1,0 +1,2 @@
+export declare type TWrapEventListenerFunction = <T>(target: T, eventListener: EventListenerOrEventListenerObject) => EventListener;
+//# sourceMappingURL=/build/es2018/types/wrap-event-listener-function.d.ts.map

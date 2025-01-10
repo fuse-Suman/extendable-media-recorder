@@ -1,0 +1,1 @@
+{"version":3,"file":"media-encoder-event-map.d.ts","sourceRoot":"/build/es2018/","sources":["interfaces/media-encoder-event-map.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,UAAU,EAAE,MAAM,cAAc,CAAC;AAE1C,MAAM,WAAW,sBAAsB;IAEnC,aAAa,EAAE,UAAU,CAAC;IAG1B,KAAK,EAAE,UAAU,CAAC;IAElB,KAAK,EAAE,KAAK,CAAC;IAEb,MAAM,EAAE,KAAK,CAAC;IAEd,KAAK,EAAE,KAAK,CAAC;IAEb,IAAI,EAAE,KAAK,CAAC;CAEf"}

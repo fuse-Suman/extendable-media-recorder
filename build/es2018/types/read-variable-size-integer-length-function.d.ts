@@ -1,0 +1,2 @@
+export declare type TReadVariableSizeIntegerLengthFunction = (dataView: Pick<DataView, 'byteLength' | 'byteOffset' | 'getUint8'>, offset: number) => null | number;
+//# sourceMappingURL=/build/es2018/types/read-variable-size-integer-length-function.d.ts.map

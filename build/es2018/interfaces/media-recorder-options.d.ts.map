@@ -1,0 +1,1 @@
+{"version":3,"file":"media-recorder-options.d.ts","sourceRoot":"/build/es2018/","sources":["interfaces/media-recorder-options.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,qBAAqB;IAElC,kBAAkB,CAAC,EAAE,MAAM,CAAC;IAE5B,aAAa,CAAC,EAAE,MAAM,CAAC;IAEvB,QAAQ,CAAC,EAAE,MAAM,CAAC;IAElB,kBAAkB,CAAC,EAAE,MAAM,CAAC;CAE/B"}
