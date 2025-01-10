@@ -1,3 +1,1 @@
-import { TWindow } from './window';
-
-export type TWindowFactory = () => null | TWindow;
+export type TWindowFactory = () => null | Window;

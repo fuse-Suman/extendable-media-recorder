@@ -1,99 +1,99 @@
 {
-    "author": "Christoph Guttandin",
-    "bugs": {
-        "url": "https://github.com/chrisguttandin/extendable-media-recorder/issues"
-    },
-    "config": {
-        "commitizen": {
-            "path": "cz-conventional-changelog"
-        }
-    },
-    "contributors": [
-        {
-            "email": "alex.maclean2000@gmail.com",
-            "name": "Alex MacLean"
-        }
-    ],
-    "dependencies": {
-        "@babel/runtime": "^7.26.0",
-        "media-encoder-host": "^9.0.14",
-        "multi-buffer-data-view": "^6.0.17",
-        "recorder-audio-worklet": "^6.0.41",
-        "standardized-audio-context": "^25.3.77",
-        "subscribable-things": "^2.1.47",
-        "tslib": "^2.8.1"
-    },
-    "description": "An extendable drop-in replacement for the native MediaRecorder.",
-    "devDependencies": {
-        "@babel/core": "^7.26.0",
-        "@babel/plugin-external-helpers": "^7.25.9",
-        "@babel/plugin-transform-runtime": "^7.25.9",
-        "@babel/preset-env": "^7.26.0",
-        "@commitlint/cli": "^19.6.1",
-        "@commitlint/config-angular": "^19.7.0",
-        "@rollup/plugin-babel": "^6.0.4",
-        "chai": "^4.3.10",
-        "commitizen": "^4.3.1",
-        "cz-conventional-changelog": "^3.3.0",
-        "eslint": "^8.57.0",
-        "eslint-config-holy-grail": "^60.0.18",
-        "extendable-media-recorder-wav-encoder": "^7.0.123",
-        "grunt": "^1.6.1",
-        "grunt-cli": "^1.5.0",
-        "grunt-sh": "^0.2.1",
-        "husky": "^9.1.7",
-        "karma": "^6.4.4",
-        "karma-browserstack-launcher": "^1.6.0",
-        "karma-chrome-launcher": "^3.2.0",
-        "karma-firefox-launcher": "^2.1.3",
-        "karma-mocha": "^2.0.1",
-        "karma-sinon-chai": "^2.0.2",
-        "karma-webkit-launcher": "^2.6.0",
-        "karma-webpack": "^5.0.1",
-        "lint-staged": "^15.3.0",
-        "load-grunt-config": "^4.0.1",
-        "mocha": "^10.8.2",
-        "prettier": "^3.4.2",
-        "rimraf": "^6.0.1",
-        "rollup": "^4.30.0",
-        "sinon": "^17.0.2",
-        "sinon-chai": "^3.7.0",
-        "ts-loader": "^9.5.1",
-        "tsconfig-holy-grail": "^15.0.2",
-        "tslint": "^6.1.3",
-        "tslint-config-holy-grail": "^56.0.6",
-        "typescript": "^5.7.2",
-        "webpack": "^5.97.1"
-    },
-    "files": [
-        "build/es2019/",
-        "build/es5/",
-        "src/"
-    ],
-    "homepage": "https://github.com/chrisguttandin/extendable-media-recorder",
-    "keywords": [
-        "Web Audio API",
-        "audio",
-        "browser"
-    ],
-    "license": "MIT",
-    "main": "build/es5/bundle.js",
-    "module": "build/es2019/module.js",
-    "name": "extendable-media-recorder",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/chrisguttandin/extendable-media-recorder.git"
-    },
-    "scripts": {
-        "build": "rimraf build/* && tsc --project src/tsconfig.json && rollup --config config/rollup/bundle.mjs",
-        "lint": "npm run lint:config && npm run lint:src && npm run lint:test",
-        "lint:config": "eslint --config config/eslint/config.json --ext .js --report-unused-disable-directives config/",
-        "lint:src": "tslint --config config/tslint/src.json --project src/tsconfig.json src/*.ts src/**/*.ts",
-        "lint:test": "eslint --config config/eslint/test.json --ext .js --report-unused-disable-directives test/",
-        "prepare": "husky",
-        "prepublishOnly": "npm run build",
-        "test": "grunt lint && grunt test"
-    },
-    "types": "build/es2019/module.d.ts",
-    "version": "9.2.19"
+  "author": "Christoph Guttandin",
+  "bugs": {
+    "url": "https://github.com/chrisguttandin/extendable-media-recorder/issues"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.8.4",
+    "@rollup/plugin-babel": "^6.0.3",
+    "media-encoder-host": "^8.1.0",
+    "multi-buffer-data-view": "^1.1.10",
+    "recorder-audio-worklet": "^4.0.44",
+    "standardized-audio-context": "^23.1.2",
+    "tslib": "^1.10.0"
+  },
+  "description": "An extendable drop-in replacement for the native MediaRecorder.",
+  "devDependencies": {
+    "@babel/core": "^7.8.4",
+    "@babel/plugin-external-helpers": "^7.8.3",
+    "@babel/plugin-transform-runtime": "^7.8.3",
+    "@babel/preset-env": "^7.8.4",
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-angular": "^8.3.4",
+    "chai": "^4.2.0",
+    "commitizen": "^4.0.3",
+    "cz-conventional-changelog": "^3.1.0",
+    "eslint": "^6.8.0",
+    "eslint-config-holy-grail": "^46.0.3",
+    "extendable-media-recorder-wav-encoder": "^6.0.16",
+    "grunt": "^1.0.4",
+    "grunt-cli": "^1.3.2",
+    "grunt-contrib-clean": "^2.0.0",
+    "grunt-contrib-watch": "^1.1.0",
+    "grunt-karma": "^3.0.2",
+    "grunt-sh": "^0.2.0",
+    "husky": "^4.2.1",
+    "karma": "^4.4.1",
+    "karma-browserstack-launcher": "^1.5.1",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-firefox-launcher": "^1.3.0",
+    "karma-mocha": "^1.3.0",
+    "karma-opera-launcher": "^1.0.0",
+    "karma-safari-launcher": "^1.0.0",
+    "karma-sauce-launcher": "^2.0.2",
+    "karma-sinon-chai": "^2.0.2",
+    "karma-webpack": "^4.0.2",
+    "load-grunt-config": "^3.0.1",
+    "mocha": "^7.0.1",
+    "rollup": "^1.30.1",
+    "rollup-plugin-babel": "^4.3.3",
+    "sinon": "^8.1.1",
+    "sinon-chai": "^3.4.0",
+    "ts-loader": "^6.2.1",
+    "tsconfig-holy-grail": "^10.0.41",
+    "tslint": "^5.20.1",
+    "tslint-config-holy-grail": "^47.0.7",
+    "typescript": "^3.7.5",
+    "webpack": "^4.41.5"
+  },
+  "files": [
+    "build/es2018/",
+    "build/es5/",
+    "src/"
+  ],
+  "homepage": "https://github.com/chrisguttandin/extendable-media-recorder",
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint --edit --extends @commitlint/config-angular",
+      "pre-commit": "grunt lint"
+    }
+  },
+  "keywords": [
+    "Web Audio API",
+    "audio",
+    "browser"
+  ],
+  "license": "MIT",
+  "main": "build/es5/bundle.js",
+  "module": "build/es2018/module.js",
+  "name": "extendable-media-recorder",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chrisguttandin/extendable-media-recorder.git"
+  },
+  "scripts": {
+    "build": "rimraf build/* && tsc --project src/tsconfig.json && rollup --config config/rollup/bundle.mjs",
+    "prepublishOnly": "npm run build",
+    "test": "grunt lint && grunt test"
+  },
+  "types": "build/es2018/module.d.ts",
+  "version": "5.2.2",
+  "engines": {
+    "node": ">=14.4.0"
+  }
 }

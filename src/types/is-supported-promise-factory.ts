@@ -1,3 +1,1 @@
-import { TWindow } from './window';
-
-export type TIsSupportedPromiseFactory = (window: null | TWindow) => Promise<boolean>;
+export type TIsSupportedPromiseFactory = (window: null | Window) => Promise<boolean>;

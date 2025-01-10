@@ -7,4 +7,4 @@ export type TWebmPcmMediaRecorderFactory = (
     nativeMediaRecorderConstructor: TNativeMediaRecorderConstructor,
     mediaStream: MediaStream,
     mimeType: string
-) => Omit<IMediaRecorder, 'ondataavailable' | 'onerror' | 'onpause' | 'onresume' | 'onstart' | 'onstop' | keyof TNativeEventTarget>;
+) => Omit<IMediaRecorder, 'ondataavailable' | keyof TNativeEventTarget>;

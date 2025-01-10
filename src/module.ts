@@ -1,5 +1,4 @@
 import { deregister as drgstr, register as rgstr } from 'media-encoder-host';
-import { createBlobEventFactory } from './factories/blob-event-factory';
 import { createDecodeWebMChunk } from './factories/decode-web-m-chunk';
 import { createEventTargetConstructor } from './factories/event-target-constructor';
 import { createEventTargetFactory } from './factories/event-target-factory';
@@ -7,9 +6,8 @@ import { createInvalidModificationError } from './factories/invalid-modification
 import { createInvalidStateError } from './factories/invalid-state-error';
 import { createIsSupportedPromise } from './factories/is-supported-promise';
 import { createMediaRecorderConstructor } from './factories/media-recorder-constructor';
-import { createNativeBlobEventConstructor } from './factories/native-blob-event-constructor';
+import { createNativeMediaRecorderFactory } from './factories/native-media-recorder';
 import { createNativeMediaRecorderConstructor } from './factories/native-media-recorder-constructor';
-import { createNativeMediaRecorderFactory } from './factories/native-media-recorder-factory';
 import { createNotSupportedError } from './factories/not-supported-error';
 import { createReadElementContent } from './factories/read-element-content';
 import { createReadElementType } from './factories/read-element-type';
@@ -30,11 +28,8 @@ export * from './types/index';
 
 const encoderRegexes: RegExp[] = [];
 
-const window = createWindow();
-const nativeBlobEventConstructor = createNativeBlobEventConstructor(window);
-const createBlobEvent = createBlobEventFactory(nativeBlobEventConstructor);
+const createNativeMediaRecorder = createNativeMediaRecorderFactory(createInvalidModificationError, createNotSupportedError);
 const createWebAudioMediaRecorder = createWebAudioMediaRecorderFactory(
-    createBlobEvent,
     createInvalidModificationError,
     createInvalidStateError,
     createNotSupportedError
@@ -43,12 +38,17 @@ const readVariableSizeInteger = createReadVariableSizeInteger(readVariableSizeIn
 const readElementContent = createReadElementContent(readVariableSizeInteger);
 const readElementType = createReadElementType(readVariableSizeInteger);
 const decodeWebMChunk = createDecodeWebMChunk(readElementContent, readElementType);
-const createWebmPcmMediaRecorder = createWebmPcmMediaRecorderFactory(createBlobEvent, decodeWebMChunk, readVariableSizeInteger);
+const createWebmPcmMediaRecorder = createWebmPcmMediaRecorderFactory(
+    createInvalidModificationError,
+    createNotSupportedError,
+    decodeWebMChunk
+);
+const window = createWindow();
 const createEventTarget = createEventTargetFactory(window);
 const nativeMediaRecorderConstructor = createNativeMediaRecorderConstructor(window);
 
 const mediaRecorderConstructor: IMediaRecorderConstructor = createMediaRecorderConstructor(
-    createNativeMediaRecorderFactory(createNotSupportedError),
+    createNativeMediaRecorder,
     createNotSupportedError,
     createWebAudioMediaRecorder,
     createWebmPcmMediaRecorder,
@@ -58,6 +58,8 @@ const mediaRecorderConstructor: IMediaRecorderConstructor = createMediaRecorderC
 );
 
 export { mediaRecorderConstructor as MediaRecorder };
+
+export const isSupported = () => createIsSupportedPromise(window);
 
 const ports = new WeakMap<MessagePort, RegExp>();
 
@@ -72,8 +74,6 @@ export const deregister = async (port: MessagePort): Promise<void> => {
         encoderRegexes.splice(index, 1);
     }
 };
-
-export const isSupported = () => createIsSupportedPromise(window);
 
 export const register = async (port: MessagePort): Promise<void> => {
     const encoderRegex = await rgstr(port);

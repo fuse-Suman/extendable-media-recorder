@@ -1,6 +1,7 @@
 import { IBlobEvent } from './blob-event';
 
-export interface IMediaRecorderEventMap extends Record<string, Event> {
+export interface IMediaRecorderEventMap {
+
     dataavailable: IBlobEvent;
 
     // @todo This should fire a MediaRecorderErrorEvent.
@@ -13,4 +14,5 @@ export interface IMediaRecorderEventMap extends Record<string, Event> {
     start: Event;
 
     stop: Event;
+
 }

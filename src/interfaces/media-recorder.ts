@@ -1,29 +1,30 @@
-import { TBlobEventHandler, TErrorEventHandler, TEventHandler, TRecordingState } from '../types';
-import { IEventTarget } from './event-target';
-import { IMediaRecorderEventMap } from './media-recorder-event-map';
+import { TDataavailableEventHandler, TNativeEventTarget, TRecordingState } from '../types';
+import { IMediaRecorderEventMap } from './media-encoder-event-map';
 
-export interface IMediaRecorder extends IEventTarget<IMediaRecorderEventMap> {
-    readonly mimeType: string;
+export interface IMediaRecorder extends TNativeEventTarget {
 
-    ondataavailable: null | TBlobEventHandler<this>;
-
-    onerror: null | TErrorEventHandler<this>;
-
-    onpause: null | TEventHandler<this>;
-
-    onresume: null | TEventHandler<this>;
-
-    onstart: null | TEventHandler<this>;
-
-    onstop: null | TEventHandler<this>;
+    ondataavailable: null | TDataavailableEventHandler;
 
     readonly state: TRecordingState;
 
-    pause(): void;
+    addEventListener<K extends keyof IMediaRecorderEventMap> (
+        type: K,
+        listener: (this: IMediaRecorder, event: IMediaRecorderEventMap[K]) => any,
+        options?: boolean | AddEventListenerOptions
+    ): void;
 
-    resume(): void;
+    addEventListener (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
 
-    start(timeslice?: number): void;
+    removeEventListener<K extends keyof IMediaRecorderEventMap> (
+        type: K,
+        listener: (this: IMediaRecorder, event: IMediaRecorderEventMap[K]) => any,
+        options?: boolean | EventListenerOptions
+    ): void;
 
-    stop(): void;
+    removeEventListener (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+
+    start (timeslice?: number): void;
+
+    stop (): void;
+
 }

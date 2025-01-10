@@ -1,33 +1,36 @@
 import { encode, instantiate } from 'media-encoder-host';
 import { MultiBufferDataView } from 'multi-buffer-data-view';
-import { on } from 'subscribable-things';
-import { TPromisedDataViewElementTypeEncoderInstanceIdAndPort, TRecordingState, TWebmPcmMediaRecorderFactoryFactory } from '../types';
+import { TPromisedDataViewElementTypeEncoderIdAndPort, TRecordingState, TWebmPcmMediaRecorderFactoryFactory } from '../types';
 
 export const createWebmPcmMediaRecorderFactory: TWebmPcmMediaRecorderFactoryFactory = (
-    createBlobEvent,
-    decodeWebMChunk,
-    readVariableSizeInteger
+    createInvalidModificationError,
+    createNotSupportedError,
+    decodeWebMChunk
 ) => {
     return (eventTarget, nativeMediaRecorderConstructor, mediaStream, mimeType) => {
-        const bufferedArrayBuffers: ArrayBuffer[] = [];
         const nativeMediaRecorder = new nativeMediaRecorderConstructor(mediaStream, { mimeType: 'audio/webm;codecs=pcm' });
+        const audioTracks = mediaStream.getAudioTracks();
+        const channelCount = (audioTracks.length === 0)
+            ? undefined
+            : audioTracks[0].getSettings().channelCount;
+        const sampleRate = (audioTracks.length === 0)
+            ? undefined
+            : audioTracks[0].getSettings().sampleRate;
 
-        let promisedPartialRecording: null | Promise<void> = null;
-        let stopRecording = () => {}; // tslint:disable-line:no-empty
+        let promisedDataViewElementTypeEncoderIdAndPort: null | TPromisedDataViewElementTypeEncoderIdAndPort = (sampleRate !== undefined)
+            ? instantiate(mimeType, sampleRate)
+            : null;
+        let promisedPartialRecording: null | Promise<void> = null; // tslint:disable-line:invalid-void
 
         const dispatchDataAvailableEvent = (arrayBuffers: ArrayBuffer[]): void => {
-            eventTarget.dispatchEvent(createBlobEvent('dataavailable', { data: new Blob(arrayBuffers, { type: mimeType }) }));
+            eventTarget.dispatchEvent(new BlobEvent('dataavailable', { data: new Blob(arrayBuffers, { type: mimeType }) }));
         };
 
-        const requestNextPartialRecording = async (encoderInstanceId: number, timeslice: number): Promise<void> => {
-            const arrayBuffers = await encode(encoderInstanceId, timeslice);
+        const requestNextPartialRecording = async (encoderId: number, timeslice: number): Promise<void> => { // tslint:disable-line:invalid-void max-line-length
+            dispatchDataAvailableEvent(await encode(encoderId, timeslice));
 
-            if (nativeMediaRecorder.state === 'inactive') {
-                bufferedArrayBuffers.push(...arrayBuffers);
-            } else {
-                dispatchDataAvailableEvent(arrayBuffers);
-
-                promisedPartialRecording = requestNextPartialRecording(encoderInstanceId, timeslice);
+            if (nativeMediaRecorder.state !== 'inactive') {
+                promisedPartialRecording = requestNextPartialRecording(encoderId, timeslice);
             }
         };
 
@@ -37,153 +40,79 @@ export const createWebmPcmMediaRecorderFactory: TWebmPcmMediaRecorderFactoryFact
             }
 
             if (promisedPartialRecording !== null) {
-                promisedPartialRecording.catch(() => {
-                    /* @todo Only catch the errors caused by a duplicate call to encode. */
-                });
-                promisedPartialRecording = null;
+                promisedPartialRecording.catch(() => { /* @todo Only catch the errors caused by a duplicate call to encode. */ });
             }
-
-            stopRecording();
-            stopRecording = () => {}; // tslint:disable-line:no-empty
 
             nativeMediaRecorder.stop();
         };
 
-        nativeMediaRecorder.addEventListener('error', (event) => {
+        nativeMediaRecorder.addEventListener('error', () => {
             stop();
-            eventTarget.dispatchEvent(
-                new ErrorEvent('error', {
-                    error: (<ErrorEvent>event).error
-                })
-            );
+            // Bug #3 & 4: Chrome throws an error event without any error.
+            eventTarget.dispatchEvent(new ErrorEvent('error', { error: createInvalidModificationError() }));
         });
-        nativeMediaRecorder.addEventListener('pause', () => eventTarget.dispatchEvent(new Event('pause')));
-        nativeMediaRecorder.addEventListener('resume', () => eventTarget.dispatchEvent(new Event('resume')));
-        nativeMediaRecorder.addEventListener('start', () => eventTarget.dispatchEvent(new Event('start')));
 
         return {
-            get mimeType(): string {
-                return mimeType;
-            },
 
-            get state(): TRecordingState {
+            get state (): TRecordingState {
                 return nativeMediaRecorder.state;
             },
 
-            pause(): void {
-                return nativeMediaRecorder.pause();
-            },
+            start (timeslice?: number): void {
+                /*
+                 * Bug #6: Chrome will emit a blob without any data when asked to encode a MediaStream with a video track into an audio
+                 * codec.
+                 */
+                if (mediaStream.getVideoTracks().length > 0) {
+                    throw createNotSupportedError();
+                }
 
-            resume(): void {
-                return nativeMediaRecorder.resume();
-            },
+                if (nativeMediaRecorder.state === 'inactive') {
+                    nativeMediaRecorder.addEventListener('dataavailable', ({ data }) => {
+                        if (promisedDataViewElementTypeEncoderIdAndPort !== null) {
+                            promisedDataViewElementTypeEncoderIdAndPort = promisedDataViewElementTypeEncoderIdAndPort
+                                .then(async ({ dataView = null, elementType = null, encoderId, port }) => {
+                                    const multiOrSingleBufferDataView = (dataView === null)
+                                        ? new DataView(await data.arrayBuffer())
+                                        : new MultiBufferDataView([ ...dataView.buffers, await data.arrayBuffer() ], dataView.byteOffset);
 
-            start(timeslice?: number): void {
-                const [audioTrack] = mediaStream.getAudioTracks();
+                                    const { currentElementType, offset, contents } = decodeWebMChunk(
+                                        multiOrSingleBufferDataView,
+                                        elementType,
+                                        channelCount
+                                    );
 
-                if (audioTrack !== undefined && nativeMediaRecorder.state === 'inactive') {
-                    // Bug #19: Chrome does not expose the correct channelCount property right away.
-                    const { channelCount, sampleRate } = audioTrack.getSettings();
-
-                    if (channelCount === undefined) {
-                        throw new Error('The channelCount is not defined.');
-                    }
-
-                    if (sampleRate === undefined) {
-                        throw new Error('The sampleRate is not defined.');
-                    }
-
-                    let isRecording = false;
-                    let isStopped = false;
-                    // Bug #9: Chrome sometimes fires more than one dataavailable event while being inactive.
-                    let pendingInvocations = 0;
-                    let promisedDataViewElementTypeEncoderInstanceIdAndPort: TPromisedDataViewElementTypeEncoderInstanceIdAndPort =
-                        instantiate(mimeType, sampleRate);
-
-                    stopRecording = () => {
-                        isStopped = true;
-                    };
-
-                    const removeEventListener = on(
-                        nativeMediaRecorder,
-                        'dataavailable'
-                    )(({ data }) => {
-                        pendingInvocations += 1;
-
-                        const promisedArrayBuffer = data.arrayBuffer();
-
-                        promisedDataViewElementTypeEncoderInstanceIdAndPort = promisedDataViewElementTypeEncoderInstanceIdAndPort.then(
-                            async ({ dataView = null, elementType = null, encoderInstanceId, port }) => {
-                                const arrayBuffer = await promisedArrayBuffer;
-
-                                pendingInvocations -= 1;
-
-                                const currentDataView =
-                                    dataView === null
-                                        ? new MultiBufferDataView([arrayBuffer])
-                                        : new MultiBufferDataView([...dataView.buffers, arrayBuffer], dataView.byteOffset);
-
-                                if (!isRecording && nativeMediaRecorder.state === 'recording' && !isStopped) {
-                                    const lengthAndValue = readVariableSizeInteger(currentDataView, 0);
-
-                                    if (lengthAndValue === null) {
-                                        return { dataView: currentDataView, elementType, encoderInstanceId, port };
-                                    }
-
-                                    const { value } = lengthAndValue;
-
-                                    if (value !== 172351395) {
-                                        return { dataView, elementType, encoderInstanceId, port };
-                                    }
-
-                                    isRecording = true;
-                                }
-
-                                const { currentElementType, offset, contents } = decodeWebMChunk(
-                                    currentDataView,
-                                    elementType,
-                                    channelCount
-                                );
-                                const remainingDataView =
-                                    offset < currentDataView.byteLength
-                                        ? new MultiBufferDataView(currentDataView.buffers, currentDataView.byteOffset + offset)
+                                    const remainingDataView = (offset < multiOrSingleBufferDataView.byteLength)
+                                        ? ('buffer' in multiOrSingleBufferDataView)
+                                            ? new MultiBufferDataView(
+                                                [ multiOrSingleBufferDataView.buffer ],
+                                                multiOrSingleBufferDataView.byteOffset + offset
+                                            )
+                                            : new MultiBufferDataView(
+                                                multiOrSingleBufferDataView.buffers,
+                                                multiOrSingleBufferDataView.byteOffset + offset
+                                            )
                                         : null;
 
-                                contents.forEach((content) =>
-                                    port.postMessage(
-                                        content,
-                                        content.map(({ buffer }) => buffer)
-                                    )
-                                );
+                                    contents
+                                        .forEach((content) => port.postMessage(content, content.map(({ buffer }) => buffer)));
 
-                                if (pendingInvocations === 0 && (nativeMediaRecorder.state === 'inactive' || isStopped)) {
-                                    encode(encoderInstanceId, null).then((arrayBuffers) => {
-                                        dispatchDataAvailableEvent([...bufferedArrayBuffers, ...arrayBuffers]);
+                                    if (nativeMediaRecorder.state === 'inactive') {
+                                        encode(encoderId, null)
+                                            .then(dispatchDataAvailableEvent);
 
-                                        bufferedArrayBuffers.length = 0;
+                                        port.postMessage([ ]);
+                                        port.close();
+                                    }
 
-                                        eventTarget.dispatchEvent(new Event('stop'));
-                                    });
-
-                                    port.postMessage([]);
-                                    port.close();
-
-                                    removeEventListener();
-                                }
-
-                                return { dataView: remainingDataView, elementType: currentElementType, encoderInstanceId, port };
-                            }
-                        );
+                                    return { dataView: remainingDataView, elementType: currentElementType, encoderId, port };
+                                });
+                        }
                     });
 
-                    if (timeslice !== undefined) {
-                        promisedDataViewElementTypeEncoderInstanceIdAndPort.then(({ encoderInstanceId }) => {
-                            if (isStopped) {
-                                return;
-                            }
-
-                            promisedPartialRecording = requestNextPartialRecording(encoderInstanceId, timeslice);
-                        });
+                    if (promisedDataViewElementTypeEncoderIdAndPort !== null && timeslice !== undefined) {
+                        promisedDataViewElementTypeEncoderIdAndPort
+                            .then(({ encoderId }) => promisedPartialRecording = requestNextPartialRecording(encoderId, timeslice));
                     }
                 }
 
@@ -191,6 +120,8 @@ export const createWebmPcmMediaRecorderFactory: TWebmPcmMediaRecorderFactoryFact
             },
 
             stop
+
         };
+
     };
 };

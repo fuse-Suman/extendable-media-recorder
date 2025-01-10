@@ -2,9 +2,11 @@
 
 **An extendable drop-in replacement for the native MediaRecorder.**
 
+[![tests](https://img.shields.io/travis/chrisguttandin/extendable-media-recorder/master.svg?style=flat-square)](https://travis-ci.org/chrisguttandin/extendable-media-recorder)
+[![dependencies](https://img.shields.io/david/chrisguttandin/extendable-media-recorder.svg?style=flat-square)](https://www.npmjs.com/package/extendable-media-recorder)
 [![version](https://img.shields.io/npm/v/extendable-media-recorder.svg?style=flat-square)](https://www.npmjs.com/package/extendable-media-recorder)
 
-This package provides (a part of) the MediaRecorder API as defined by the [MediaStream Recording](https://w3c.github.io/mediacapture-record) specification. If possible it will use the native implementation.
+This package provides (a part of) the MediaRecorder API as defined by the [MediaStream Recording](https://w3c.github.io/mediacapture-record) specification. If possible it will use the native implementation which is available in Chrome and Firefox.
 
 In addition this package also allows to define custom encoders. Those encoders can be used to render files which are not supported by any browser so far. This does currently only work for audio encoders.
 
@@ -22,41 +24,19 @@ It exports the `MediaRecorder` constructor. It can be used like the native imple
 import { MediaRecorder } from 'extendable-media-recorder';
 
 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-const mediaRecorder = new MediaRecorder(stream);
+const mediaRecoder = new MediaRecorder(stream);
 ```
-
-### Using a custom encoder
 
 `extendable-media-recorder` also exports a `register()` function which can be used to define custom encoders. One predefined encoder is available as the [`extendable-media-recorder-wav-encoder` package](https://github.com/chrisguttandin/extendable-media-recorder-wav-encoder). It can be used as shown here.
 
 ```js
-import { MediaRecorder, register } from 'extendable-media-recorder';
+import { register } from 'extendable-media-recorder';
 import { connect } from 'extendable-media-recorder-wav-encoder';
 
 await register(await connect());
 
 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/wav' });
-```
-
-### Setting the sample rate
-
-The `MediaRecoder` has no way to modify the sample rate directly. It uses the `sampleRate` of the given `MediaStream`. You can read the value being used like this:
-
-```js
-const { sampleRate } = stream.getAudioTracks()[0].getSettings();
-```
-
-To modifiy the sample rate of the recording you need to change the `sampleRate` of the `MediaStream`. But that's not possible either. Therefore the most reliable way is to use an `AudioContext` at the desired `sampleRate` to do the resampling.
-
-```js
-const audioContext = new AudioContext({ sampleRate: 16000 });
-const mediaStreamAudioSourceNode = new MediaStreamAudioSourceNode(audioContext, { mediaStream: stream });
-const mediaStreamAudioDestinationNode = new MediaStreamAudioDestinationNode(audioContext);
-
-mediaStreamAudioSourceNode.connect(mediaStreamAudioDestinationNode);
-
-const mediaRecorder = new MediaRecorder(mediaStreamAudioDestinationNode.stream);
+const mediaRecoder = new MediaRecorder(stream, { mimeType: 'audio/wav' });
 ```
 
 ## Inner Workings
